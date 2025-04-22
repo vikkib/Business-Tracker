@@ -1,0 +1,15 @@
+# SQLite database
+data/business_tracker.db
+
+# Exported files
+data/exports/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# VS Code settings (optional)
+.vscode/.DS_Store
