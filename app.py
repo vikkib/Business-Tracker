@@ -37,6 +37,7 @@ def close_connection(exception):
 @app.route('/')
 def index():
     conn = get_db()
+    return render_template("index.html", now=datetime.now())
     
     # Get current year
     current_year = datetime.now().year
