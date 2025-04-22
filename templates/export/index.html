@@ -1,0 +1,319 @@
+{% extends 'layout.html' %}
+
+{% block title %}Export Data - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4 mb-4">Export Data for Accountant</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Complete Year-End Package</h5>
+                </div>
+                <div class="card-body">
+                    <p>Generate a complete package of all your business data for a specific year. This includes all reports in both PDF and CSV formats, ready to share with your accountant.</p>
+                    
+                    <div class="row mt-3">
+                        {% set current_year = now.year %}
+                        {% for year in range(current_year, current_year-3, -1) %}
+                        <div class="col-md-3 mb-2">
+                            <a href="/export/all/{{ year }}" class="btn btn-primary">
+                                <i class="bi bi-file-earmark-zip"></i> {{ year }} Complete Package
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Income Export -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Income Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="incomeExportForm">
+                        <div class="mb-3">
+                            <label for="income_start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="income_start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="income_end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="income_end_date" name="end_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="income_category_id" class="form-label">Category</label>
+                            <select class="form-select" id="income_category_id" name="category_id">
+                                <option value="">All Categories</option>
+                                {% for category in income_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="income_client_id" class="form-label">Client</label>
+                            <select class="form-select" id="income_client_id" name="client_id">
+                                <option value="">All Clients</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" onclick="exportIncome('csv')">
+                                <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="exportIncome('pdf')">
+                                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expenses Export -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Expense Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="expenseExportForm">
+                        <div class="mb-3">
+                            <label for="expense_start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="expense_start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense_end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="expense_end_date" name="end_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense_category_id" class="form-label">Category</label>
+                            <select class="form-select" id="expense_category_id" name="category_id">
+                                <option value="">All Categories</option>
+                                {% for category in expense_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense_vendor_id" class="form-label">Vendor</label>
+                            <select class="form-select" id="expense_vendor_id" name="vendor_id">
+                                <option value="">All Vendors</option>
+                                {% for vendor in vendors %}
+                                <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tax_deductible" name="tax_deductible" value="1">
+                                <label class="form-check-label" for="tax_deductible">
+                                    Tax Deductible Only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" onclick="exportExpenses('csv')">
+                                <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="exportExpenses('pdf')">
+                                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mileage Export -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Mileage Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="mileageExportForm">
+                        <div class="mb-3">
+                            <label for="mileage_start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="mileage_start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mileage_end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="mileage_end_date" name="end_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mileage_vehicle_id" class="form-label">Vehicle</label>
+                            <select class="form-select" id="mileage_vehicle_id" name="vehicle_id">
+                                <option value="">All Vehicles</option>
+                                {% for vehicle in vehicles %}
+                                <option value="{{ vehicle.id }}">{{ vehicle.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mileage_category_id" class="form-label">Category</label>
+                            <select class="form-select" id="mileage_category_id" name="category_id">
+                                <option value="">All Categories</option>
+                                {% for category in mileage_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" onclick="exportMileage('csv')">
+                                <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="exportMileage('pdf')">
+                                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profit & Loss Export -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Profit & Loss Report</h5>
+                </div>
+                <div class="card-body">
+                    <form id="profitLossExportForm">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label for="pl_start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="pl_start_date" name="start_date">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label for="pl_end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="pl_end_date" name="end_date">
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="mb-3 w-100">
+                                    <button type="button" class="btn btn-danger w-100" onclick="exportProfitLoss()">
+                                        <i class="bi bi-file-earmark-pdf"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Year-End Reports -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Year-End Reports</h5>
+                </div>
+                <div class="card-body">
+                    <p>Generate comprehensive year-end reports for your accountant.</p>
+                    
+                    <div class="row mt-3">
+                        {% set current_year = now.year %}
+                        {% for year in range(current_year, current_year-3, -1) %}
+                        <div class="col-md-4 mb-2">
+                            <a href="/export/year-end/pdf/{{ year }}" class="btn btn-outline-danger">
+                                <i class="bi bi-file-earmark-pdf"></i> {{ year }} Report
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function exportIncome(format) {
+        const form = document.getElementById('incomeExportForm');
+        const formData = new FormData(form);
+        
+        // Build query string
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        // Redirect to export URL
+        window.location.href = `/export/income/${format}?${params.toString()}`;
+    }
+    
+    function exportExpenses(format) {
+        const form = document.getElementById('expenseExportForm');
+        const formData = new FormData(form);
+        
+        // Build query string
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        // Redirect to export URL
+        window.location.href = `/export/expenses/${format}?${params.toString()}`;
+    }
+    
+    function exportMileage(format) {
+        const form = document.getElementById('mileageExportForm');
+        const formData = new FormData(form);
+        
+        // Build query string
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        // Redirect to export URL
+        window.location.href = `/export/mileage/${format}?${params.toString()}`;
+    }
+    
+    function exportProfitLoss() {
+        const form = document.getElementById('profitLossExportForm');
+        const formData = new FormData(form);
+        
+        // Build query string
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        
+        // Redirect to export URL
+        window.location.href = `/export/profit-loss/pdf?${params.toString()}`;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date ranges to current year
+        const currentYear = new Date().getFullYear();
+        const startDate = `${currentYear}-01-01`;
+        const endDate = `${currentYear}-12-31`;
+        
+        document.getElementById('income_start_date').value = startDate;
+        document.getElementById('income_end_date').value = endDate;
+        document.getElementById('expense_start_date').value = startDate;
+        document.getElementById('expense_end_date').value = endDate;
+        document.getElementById('mileage_start_date').value = startDate;
+        document.getElementById('mileage_end_date').value = endDate;
+        document.getElementById('pl_start_date').value = startDate;
+        document.getElementById('pl_end_date').value = endDate;
+    });
+</script>
+{% endblock %}

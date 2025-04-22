@@ -1,0 +1,162 @@
+{% extends 'layout.html' %}
+
+{% block title %}Reports - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4 mb-4">Reports</h1>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Income Report</h5>
+                    <p class="card-text">View and filter income transactions by date, category, and client.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/reports/income" class="btn btn-primary">View Report</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Expense Report</h5>
+                    <p class="card-text">View and filter expenses by date, category, vendor, and tax deductible status.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/reports/expenses" class="btn btn-primary">View Report</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Mileage Report</h5>
+                    <p class="card-text">View and filter mileage entries by date, vehicle, category, and client.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/reports/mileage" class="btn btn-primary">View Report</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Profit & Loss Report</h5>
+                    <p class="card-text">View income, expenses, and profit/loss for a specified period.</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/reports/profit-loss" class="btn btn-primary">View Report</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="mt-4 mb-3">Year-End Reports</h2>
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Year-End Summary Reports</h5>
+                </div>
+                <div class="card-body">
+                    <p>Generate comprehensive year-end reports for your accountant, including income, expenses, mileage, and tax deductions.</p>
+                    
+                    <div class="row mt-3">
+                        {% set current_year = now.year %}
+                        {% for year in range(current_year, current_year-3, -1) %}
+                        <div class="col-md-3 mb-2">
+                            <a href="/reports/year-end/{{ year }}" class="btn btn-outline-primary">{{ year }} Year-End Report</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="mt-4 mb-3">Export Options</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Export Income</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/export/income/csv" method="get">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Export Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/export/expenses/csv" method="get">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="tax_deductible" name="tax_deductible" value="1">
+                                <label class="form-check-label" for="tax_deductible">
+                                    Tax Deductible Only
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Export Mileage</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/export/mileage/csv" method="get">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel"></i> Export to CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

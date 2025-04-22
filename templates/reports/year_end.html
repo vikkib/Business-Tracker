@@ -1,0 +1,361 @@
+{% extends 'layout.html' %}
+
+{% block title %}Year-End Report - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Year-End Report {{ year }}</h1>
+        <a href="/reports" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Income</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(income_total) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Expenses</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(expense_total) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Mileage Deduction</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(mileage_deduction) }}</h2>
+                    <small>{{ "%.1f"|format(mileage_total) }} miles @ ${{ "%.3f"|format(mileage_rate.rate_per_mile) }}/mile</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card {% if profit_loss >= 0 %}bg-info{% else %}bg-warning{% endif %} text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Net Profit/Loss</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(profit_loss) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Options -->
+    <div class="mb-4">
+        <a href="/export/income/csv?start_date={{ year }}-01-01&end_date={{ year }}-12-31" class="btn btn-success me-2">
+            <i class="bi bi-file-earmark-excel"></i> Export Income
+        </a>
+        <a href="/export/expenses/csv?start_date={{ year }}-01-01&end_date={{ year }}-12-31" class="btn btn-danger me-2">
+            <i class="bi bi-file-earmark-excel"></i> Export Expenses
+        </a>
+        <a href="/export/mileage/csv?start_date={{ year }}-01-01&end_date={{ year }}-12-31" class="btn btn-primary me-2">
+            <i class="bi bi-file-earmark-excel"></i> Export Mileage
+        </a>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Income vs. Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeExpenseChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Tax Deductible Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="taxDeductibleChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Income by Category Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Income by Category</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in income_by_category %}
+                        <tr>
+                            <td>{{ item.name or 'Uncategorized' }}</td>
+                            <td>${{ "%.2f"|format(item.total) }}</td>
+                            <td>{{ "%.1f"|format(item.total / income_total * 100 if income_total else 0) }}%</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No income data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expenses by Category Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Expenses by Category</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Percentage</th>
+                            <th>Tax Deductible</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in expense_by_category %}
+                        <tr>
+                            <td>{{ item.name or 'Uncategorized' }}</td>
+                            <td>${{ "%.2f"|format(item.total) }}</td>
+                            <td>{{ "%.1f"|format(item.total / expense_total * 100 if expense_total else 0) }}%</td>
+                            <td>
+                                {% set category = categories|selectattr("name", "equalto", item.name)|first %}
+                                {% if category and category.is_tax_deductible %}
+                                <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">No expense data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tax Deductible Expenses Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Tax Deductible Expenses</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="taxDeductibleTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Vendor</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in tax_deductible_expenses %}
+                        <tr>
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.description }}</td>
+                            <td>{{ item.category_name or 'Uncategorized' }}</td>
+                            <td>{{ item.vendor_name or 'N/A' }}</td>
+                            <td>${{ "%.2f"|format(item.amount) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No tax deductible expenses found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <th colspan="4" class="text-end">Total Tax Deductible Expenses:</th>
+                            <th>${{ "%.2f"|format(tax_deductible_total) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mileage Summary -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Mileage Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>Total Miles Driven:</th>
+                                <td>{{ "%.1f"|format(mileage_total) }} miles</td>
+                            </tr>
+                            <tr>
+                                <th>IRS Mileage Rate ({{ year }}):</th>
+                                <td>${{ "%.3f"|format(mileage_rate.rate_per_mile) }}/mile</td>
+                            </tr>
+                            <tr>
+                                <th>Mileage Deduction:</th>
+                                <td>${{ "%.2f"|format(mileage_deduction) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Income vs Expenses Chart
+        const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+        
+        new Chart(incomeExpenseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Expenses', 'Profit/Loss'],
+                datasets: [{
+                    label: 'Amount ($)',
+                    data: [
+                        {{ income_total }},
+                        {{ expense_total }},
+                        {{ profit_loss }}
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(220, 53, 69, 0.7)',
+                        {% if profit_loss >= 0 %}
+                        'rgba(23, 162, 184, 0.7)'
+                        {% else %}
+                        'rgba(255, 193, 7, 0.7)'
+                        {% endif %}
+                    ],
+                    borderColor: [
+                        'rgb(40, 167, 69)',
+                        'rgb(220, 53, 69)',
+                        {% if profit_loss >= 0 %}
+                        'rgb(23, 162, 184)'
+                        {% else %}
+                        'rgb(255, 193, 7)'
+                        {% endif %}
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += '$' + context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Tax Deductible vs Non-Deductible Expenses Chart
+        const taxDeductibleCtx = document.getElementById('taxDeductibleChart').getContext('2d');
+        
+        new Chart(taxDeductibleCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Tax Deductible', 'Non-Deductible'],
+                datasets: [{
+                    data: [
+                        {{ tax_deductible_total }},
+                        {{ expense_total - tax_deductible_total }}
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(108, 117, 125, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(40, 167, 69)',
+                        'rgb(108, 117, 125)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += '$' + context.parsed.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add DataTable functionality if available
+        if (typeof $.fn.DataTable !== 'undefined') {
+            $('#taxDeductibleTable').DataTable({
+                order: [[0, 'desc']]
+            });
+        }
+    });
+</script>
+{% endblock %}

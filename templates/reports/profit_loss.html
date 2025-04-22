@@ -1,0 +1,286 @@
+{% extends 'layout.html' %}
+
+{% block title %}Profit & Loss Report - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Profit & Loss Report</h1>
+        <a href="/reports" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+    
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-funnel"></i> Date Range
+        </div>
+        <div class="card-body">
+            <form action="/reports/profit-loss" method="get">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ filters.start_date }}">
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ filters.end_date }}">
+                    </div>
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Apply</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Income</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(income_amount) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Expenses</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(expense_amount) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card {% if profit_loss >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Net Profit/Loss</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(profit_loss) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Income by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Expenses by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Income by Category Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Income by Category</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in income_by_category %}
+                        <tr>
+                            <td>{{ item.name or 'Uncategorized' }}</td>
+                            <td>${{ "%.2f"|format(item.total) }}</td>
+                            <td>{{ "%.1f"|format(item.total / income_amount * 100 if income_amount else 0) }}%</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No income data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expenses by Category Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Expenses by Category</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in expense_by_category %}
+                        <tr>
+                            <td>{{ item.name or 'Uncategorized' }}</td>
+                            <td>${{ "%.2f"|format(item.total) }}</td>
+                            <td>{{ "%.1f"|format(item.total / expense_amount * 100 if expense_amount else 0) }}%</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No expense data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Income Chart
+        const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+        const incomeData = {
+            labels: [
+                {% for item in income_by_category %}
+                '{{ item.name or "Uncategorized" }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for item in income_by_category %}
+                    {{ item.total }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(201, 203, 207, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 99, 132)',
+                    'rgb(201, 203, 207)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(incomeCtx, {
+            type: 'pie',
+            data: incomeData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += '$' + context.parsed.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Expense Chart
+        const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+        const expenseData = {
+            labels: [
+                {% for item in expense_by_category %}
+                '{{ item.name or "Uncategorized" }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for item in expense_by_category %}
+                    {{ item.total }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(255, 205, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(201, 203, 207, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(153, 102, 255)',
+                    'rgb(201, 203, 207)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(expenseCtx, {
+            type: 'pie',
+            data: expenseData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += '$' + context.parsed.toFixed(2);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'layout.html' %}
+
+{% block title %}Edit Mileage - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Edit Mileage Entry</h1>
+        <a href="/mileage" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Mileage List
+        </a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-truck"></i> Mileage Details
+        </div>
+        <div class="card-body">
+            <form action="/mileage/edit/{{ mileage.id }}" method="post">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">Date *</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ mileage.date }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="vehicle_id" class="form-label">Vehicle</label>
+                        <select class="form-select" id="vehicle_id" name="vehicle_id">
+                            <option value="">-- Select Vehicle --</option>
+                            {% for vehicle in vehicles %}
+                            <option value="{{ vehicle.id }}" {% if vehicle.id == mileage.vehicle_id %}selected{% endif %}>{{ vehicle.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="start_odometer" class="form-label">Start Odometer Reading *</label>
+                        <input type="number" class="form-control" id="start_odometer" name="start_odometer" step="0.1" min="0" value="{{ mileage.start_odometer }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="end_odometer" class="form-label">End Odometer Reading *</label>
+                        <input type="number" class="form-control" id="end_odometer" name="end_odometer" step="0.1" min="0" value="{{ mileage.end_odometer }}" required>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="purpose" class="form-label">Trip Purpose *</label>
+                        <input type="text" class="form-control" id="purpose" name="purpose" value="{{ mileage.purpose }}" required>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            <option value="">-- Select Category --</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id == mileage.category_id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="client_id" class="form-label">Client (if applicable)</label>
+                        <select class="form-select" id="client_id" name="client_id">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}" {% if client.id == mileage.client_id %}selected{% endif %}>{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_round_trip" name="is_round_trip" {% if mileage.is_round_trip %}checked{% endif %}>
+                        <label class="form-check-label" for="is_round_trip">
+                            Round Trip
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ mileage.notes }}</textarea>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Distance Calculation</h5>
+                                <p class="card-text">Distance: <span id="distance_display">{{ "%.1f"|format(mileage.distance) }}</span> miles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/mileage" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update Mileage</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate distance when odometer readings change
+        const startOdometerInput = document.getElementById('start_odometer');
+        const endOdometerInput = document.getElementById('end_odometer');
+        const distanceDisplay = document.getElementById('distance_display');
+        
+        function calculateDistance() {
+            const start = parseFloat(startOdometerInput.value) || 0;
+            const end = parseFloat(endOdometerInput.value) || 0;
+            
+            if (end >= start) {
+                const distance = (end - start).toFixed(1);
+                distanceDisplay.textContent = distance;
+            } else {
+                distanceDisplay.textContent = "0.0";
+            }
+        }
+        
+        startOdometerInput.addEventListener('input', calculateDistance);
+        endOdometerInput.addEventListener('input', calculateDistance);
+    });
+</script>
+{% endblock %}

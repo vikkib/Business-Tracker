@@ -1,0 +1,143 @@
+{% extends 'layout.html' %}
+
+{% block title %}Edit Income - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4">Edit Income Transaction</h1>
+        <a href="/income" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Income List
+        </a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-cash-coin"></i> Income Details
+        </div>
+        <div class="card-body">
+            <form action="/income/edit/{{ income.id }}" method="post" enctype="multipart/form-data">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">Date *</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ income.date }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="amount" class="form-label">Amount ($) *</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" value="{{ income.amount }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description *</label>
+                    <input type="text" class="form-control" id="description" name="description" value="{{ income.description }}" required>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            <option value="">-- Select Category --</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id == income.category_id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="client_id" class="form-label">Client</label>
+                        <select class="form-select" id="client_id" name="client_id">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}" {% if client.id == income.client_id %}selected{% endif %}>{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="payment_method_id" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method_id" name="payment_method_id">
+                            <option value="">-- Select Payment Method --</option>
+                            {% for method in payment_methods %}
+                            <option value="{{ method.id }}" {% if method.id == income.payment_method_id %}selected{% endif %}>{{ method.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="invoice_number" class="form-label">Invoice Number</label>
+                        <input type="text" class="form-control" id="invoice_number" name="invoice_number" value="{{ income.invoice_number }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="payment_status" class="form-label">Payment Status</label>
+                        <select class="form-select" id="payment_status" name="payment_status">
+                            <option value="paid" {% if income.payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="pending" {% if income.payment_status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="partial" {% if income.payment_status == 'partial' %}selected{% endif %}>Partial</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_recurring" name="is_recurring" {% if income.is_recurring %}checked{% endif %}>
+                            <label class="form-check-label" for="is_recurring">
+                                Recurring Income
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="recurring_frequency_container" style="display: {% if income.is_recurring %}block{% else %}none{% endif %};">
+                        <label for="recurring_frequency" class="form-label">Frequency</label>
+                        <select class="form-select" id="recurring_frequency" name="recurring_frequency">
+                            <option value="weekly" {% if income.recurring_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if income.recurring_frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                            <option value="quarterly" {% if income.recurring_frequency == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                            <option value="annually" {% if income.recurring_frequency == 'annually' %}selected{% endif %}>Annually</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="receipt_image" class="form-label">Receipt/Invoice Image</label>
+                    {% if income.receipt_image %}
+                    <div class="mb-2">
+                        <a href="/uploads/{{ income.receipt_image }}" target="_blank">View Current Receipt</a>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="receipt_image" name="receipt_image" accept="image/*">
+                    <small class="form-text text-muted">Upload a new image to replace the current one.</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ income.notes }}</textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/income" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update Income</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide recurring frequency based on checkbox
+        const isRecurringCheckbox = document.getElementById('is_recurring');
+        const recurringFrequencyContainer = document.getElementById('recurring_frequency_container');
+        
+        isRecurringCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                recurringFrequencyContainer.style.display = 'block';
+            } else {
+                recurringFrequencyContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard - Business Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4 mb-4">Dashboard</h1>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Income</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(income_total) }}</h2>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <small>View Details</small>
+                    <a href="/income" class="text-white"><i class="bi bi-arrow-right-circle"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Total Expenses</h5>
+                    <h2 class="card-text">${{ "%.2f"|format(expense_total) }}</h2>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <small>View Details</small>
+                    <a href="/expenses" class="text-white"><i class="bi bi-arrow-right-circle"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Mileage</h5>
+                    <h2 class="card-text">{{ "%.1f"|format(mileage_total) }} miles</h2>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <small>View Details</small>
+                    <a href="/mileage" class="text-white"><i class="bi bi-arrow-right-circle"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profit/Loss Chart -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Income vs. Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="profitLossChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Income</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for item in recent_income %}
+                        <a href="/income/edit/{{ item.id }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ item.description }}</h6>
+                                <small>${{ "%.2f"|format(item.amount) }}</small>
+                            </div>
+                            <small>{{ item.date }}</small>
+                        </a>
+                        {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-1">No recent income transactions</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/income" class="btn btn-sm btn-outline-secondary">View All</a>
+                    <a href="/income/add" class="btn btn-sm btn-primary float-end">Add New</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for item in recent_expenses %}
+                        <a href="/expenses/edit/{{ item.id }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ item.description }}</h6>
+                                <small>${{ "%.2f"|format(item.amount) }}</small>
+                            </div>
+                            <small>{{ item.date }}</small>
+                        </a>
+                        {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-1">No recent expense transactions</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/expenses" class="btn btn-sm btn-outline-secondary">View All</a>
+                    <a href="/expenses/add" class="btn btn-sm btn-primary float-end">Add New</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Mileage</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for item in recent_mileage %}
+                        <a href="/mileage/edit/{{ item.id }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ item.purpose }}</h6>
+                                <small>{{ "%.1f"|format(item.distance) }} miles</small>
+                            </div>
+                            <small>{{ item.date }}</small>
+                        </a>
+                        {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-1">No recent mileage entries</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/mileage" class="btn btn-sm btn-outline-secondary">View All</a>
+                    <a href="/mileage/add" class="btn btn-sm btn-primary float-end">Add New</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Sample data for chart - in a real app, this would be populated from the database
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('profitLossChart').getContext('2d');
+        
+        // Get current date for last 6 months labels
+        const months = [];
+        const currentDate = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const month = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            months.push(month.toLocaleString('default', { month: 'short' }));
+        }
+        
+        // Sample data - in a real app, this would come from the server
+        const incomeData = [4500, 5200, 4800, 5500, 6000, 5800];
+        const expenseData = [3200, 3800, 3500, 4000, 4200, 3900];
+        
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenseData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
