@@ -51,11 +51,17 @@ def index():
     result = cursor.fetchone()
     expense_total = result[0] if result[0] is not None else 0.00
 
+    # Total mileage
+    cursor.execute("SELECT SUM(distance) FROM mileage")
+    result = cursor.fetchone()
+    mileage_total = result[0] if result[0] is not None else 0.0
+
     return render_template(
         "index.html",
         now=datetime.now(),
         income_total=income_total,
         expense_total=expense_total
+        mileage_total=mileage_total
     )
     
     # Get current year
