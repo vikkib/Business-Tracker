@@ -409,7 +409,7 @@ def mileage_list():
         ORDER BY m.date DESC
     """)
     mileage = cursor.fetchall()
-    return render_template('mileage/list.html', mileage=mileage)
+    return render_template('mileage/list.html', mileage=mileage, now=datetime.now())
 
 @app.route('/mileage/add', methods=['GET', 'POST'])
 def mileage_add():
