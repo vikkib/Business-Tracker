@@ -60,7 +60,7 @@ def index():
         "index.html",
         now=datetime.now(),
         income_total=income_total,
-        expense_total=expense_total
+        expense_total=expense_total,
         mileage_total=mileage_total
     )
     
