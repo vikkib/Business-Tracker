@@ -128,6 +128,7 @@ def index():
     
     return render_template(
         'index.html',
+        now=datetime.now(),
         income_total=income_total,
         expense_total=expense_total,
         profit_loss=profit_loss,
@@ -151,7 +152,7 @@ def income_list():
         ORDER BY i.date DESC
     """)
     income = cursor.fetchall()
-    return render_template('income/list.html', income=income)
+    return render_template('income/list.html', income=income, now=datetime.now())
 
 @app.route('/income/add', methods=['GET', 'POST'])
 def income_add():
@@ -276,7 +277,7 @@ def expenses_list():
         ORDER BY e.date DESC
     """)
     expenses = cursor.fetchall()
-    return render_template('expenses/list.html', expenses=expenses)
+    return render_template('expenses/list.html', expenses=expenses, now=datetime.now())
 
 @app.route('/expenses/add', methods=['GET', 'POST'])
 def expenses_add():
