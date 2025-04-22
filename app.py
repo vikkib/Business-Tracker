@@ -34,10 +34,19 @@ def close_connection(exception):
         db.close()
 
 # Routes
+from datetime import datetime
+
 @app.route('/')
 def index():
     conn = get_db()
-    return render_template("index.html", now=datetime.now())
+    cursor = conn.cursor()
+
+    # Total up all income amounts
+    cursor.execute("SELECT SUM(amount) FROM income")
+    result = cursor.fetchone()
+    income_total = result[0] if result[0] is not None else 0.00
+
+    return render_template("index.html", now=datetime.now(), income_total=income_total)
     
     # Get current year
     current_year = datetime.now().year
