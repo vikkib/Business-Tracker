@@ -41,12 +41,22 @@ def index():
     conn = get_db()
     cursor = conn.cursor()
 
-    # Total up all income amounts
+    # Total income
     cursor.execute("SELECT SUM(amount) FROM income")
     result = cursor.fetchone()
     income_total = result[0] if result[0] is not None else 0.00
 
-    return render_template("index.html", now=datetime.now(), income_total=income_total)
+    # Total expenses
+    cursor.execute("SELECT SUM(amount) FROM expenses")
+    result = cursor.fetchone()
+    expense_total = result[0] if result[0] is not None else 0.00
+
+    return render_template(
+        "index.html",
+        now=datetime.now(),
+        income_total=income_total,
+        expense_total=expense_total
+    )
     
     # Get current year
     current_year = datetime.now().year
